@@ -5,13 +5,16 @@ exports.listarVehiculos = async (req, res) => {
     try {
         let vehiculos;
         const esAdmin = req.session.user ? req.session.user.is_admin : false;
+if (esAdmin){
+    vehiculos = await Vehiculo.findAll();
 
-        if (req.session.user) {
-            const usuario_id = req.session.user.user_id;
-            vehiculos = await Vehiculo.findAll({ where: { usuario_id } });
-        } else {
-            vehiculos = await Vehiculo.findAll();
-        }
+}else if (req.session.user) {
+    const usuario_id = req.session.user.user_id;
+    vehiculos = await Vehiculo.findAll({ where: { usuario_id } });
+} else {
+    vehiculos = await Vehiculo.findAll();
+}
+        
 
         res.render('vehiculos', { title: 'Vehículos', vehiculos, esAdmin, user: req.session.user });
     } catch (error) {
