@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %>
+    </title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <%- include('partials/header') %>
+        <div class="container">
+            <h1>Publicar Vehículo</h1>
+            <form action="/vehiculos/publicar" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="Marca">Marca</label>
+                    <input type="text" class="form-control" id="Marca" name="Marca" required>
+                </div>
+                <div class="form-group">
+                    <label for="Modelo">Modelo</label>
+                    <input type="text" class="form-control" id="Modelo" name="Modelo" required>
+                </div>
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Tipo de vehiculo</label>
+                    <select class="form-control"  id="TipoVehiculo" name="TipoVehiculo">
+                      <option value="Mecanico">Mecanico</option>
+                      <option value="Mecanico">Automatico</option>
+
+                    </select>
+                  </div>
+                <div class="form-group">
+                    <label for="exampleFormControlSelect1">Tipo de combustible</label>
+                    <select  class="form-control" id="Combustible" name="Combustible">
+                        <option value="Petrolero">Petrolero</option>
+                        <option value="Bencinero">Bencinero</option>
+
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="Año">Año</label>
+                    <input type="number" class="form-control" id="Año" name="Año">
+                </div>
+                <div class="form-group">
+                    <label for="Precio">Precio</label>
+                    <input type="text" class="form-control" id="Precio" name="Precio">
+                </div>
+                <div class="form-group">
+                    <label for="imagen1">Imagen 1</label>
+                    <input type="file" class="form-control" id="imagen1" name="imagen1">
+                </div>
+                <div class="form-group">
+                    <label for="imagen2">Imagen 2</label>
+                    <input type="file" class="form-control" id="imagen2" name="imagen2">
+                </div>
+                <button type="submit" class="btn btn-primary">Publicar</button>
+            </form>
+        </div>
+        <%- include('partials/footer') %>
+</body>
+
+</html>

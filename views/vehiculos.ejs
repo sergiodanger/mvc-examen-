@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %>
+    </title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .suggestions {
+            border: 1px solid #ccc;
+            border-top: none;
+            max-height: 150px;
+            overflow-y: auto;
+            background: white;
+            width: 100%;
+            position: absolute;
+            z-index: 1000;
+            top: 100%;
+            /* This ensures the suggestions are right below the search bar */
+        }
+
+        .suggestion-item {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('partials/header') %>
+        <div class="container mt-4">
+            <h1>Vehículos</h1>
+            <div class="search-container mb-4">
+                <form id="searchForm" class="form-inline" onsubmit="return false;">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Buscar por marca o modelo"
+                        aria-label="Buscar" id="searchInput" autocomplete="off" style="width: 80%;">
+                    <button class="btn btn-outline-success my-2 my-sm-0" type="button"
+                        onclick="searchVehicles()">Buscar</button>
+                    <div id="suggestions" class="suggestions"></div>
+                </form>
+            </div>
+            <div id="vehiculosContainer" class="row">
+                <% vehiculos.forEach(vehiculo => { %>
+                    <div class="col-lg-4 col-md-6 col-12 mb-4">
+                        <div class="card">
+                            <% if (vehiculo.Imagen1) { %>
+                                <img src="/images/<%= vehiculo.Imagen1 %>" class="card-img-top" alt="<%= vehiculo.Marca %> <%= vehiculo.Modelo %>" height="300px" width="300px">
+                            <% } else { %>
+                                <img src="/images/images.jpeg" class="card-img-top" alt="Imagen no disponible" height="300px" width="300px">
+                            <% } %>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <%= vehiculo.Marca %> <%= vehiculo.Modelo %>
+                                </h5>
+                                <p class="card-text">Combustible: <%= vehiculo.Combustible %></p>
+                                <p class="card-text">Año: <%= vehiculo.Año %></p>
+                                <p class="card-text">Precio: $<%= vehiculo.Precio.toLocaleString('es-CL') %></p>
+                                <% if (user) { %>
+                                    <button class="btn btn-warning mr-2" onclick="editarVehiculo('<%= vehiculo.id %>')" data-toggle="modal" data-target="#modalEditar">Editar</button>
+                                <% } %>
+                                <% if (esAdmin) { %>
+                                    <button class="btn btn-danger" onclick="confirmarEliminar('<%= vehiculo.id %>')">Eliminar</button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+            
+        </div>
+        <!-- Modal de Edición -->
+        <div class="modal fade" id="modalEditar" tabindex="-1" role="dialog" aria-labelledby="modalEditarLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalEditarLabel">Editar Vehículo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formEditarVehiculo">
+                            <div class="form-group">
+                                <label for="marca">Marca</label>
+                                <input type="text" class="form-control" id="Marca" name="Marca" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="modelo">Modelo</label>
+                                <input type="text" class="form-control" id="Modelo" name="Modelo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="exampleFormControlSelect1">Tipo de vehiculo</label>
+                                <select class="form-control"  id="TipoVehiculo" name="TipoVehiculo">
+                                  <option value="Mecanico">Mecanico</option>
+                                  <option value="Mecanico">Automatico</option>
+            
+                                </select>
+                              </div>
+                            <div class="form-group">
+                                <label for="exampleFormControlSelect1">Tipo de combustible</label>
+                                <select  class="form-control" id="Combustible" name="Combustible">
+                                    <option value="Petrolero">Petrolero</option>
+                                    <option value="Bencinero">Bencinero</option>
+            
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="año">Año</label>
+                                <input type="number" class="form-control" id="Año" name="Año" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="precio">Precio</label>
+                                <input type="number" class="form-control" id="Precio" name="Precio" required>
+                            </div>
+                           
+                            <input type="hidden" id="vehiculoId" name="vehiculoId">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include('partials/footer') %>
+            <script>
+                document.getElementById('searchInput').addEventListener('input', function () {
+                    const query = this.value.trim().toLowerCase();
+                    if (query.length > 0) {
+                        fetch(`/vehiculos/search?query=${query}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const suggestionsContainer = document.getElementById('suggestions');
+                                suggestionsContainer.innerHTML = '';
+                                if (data.length > 0) {
+                                    data.forEach(vehiculo => {
+                                        const suggestionItem = document.createElement('div');
+                                        suggestionItem.className = 'suggestion-item';
+                                        suggestionItem.textContent = `${vehiculo.Marca} ${vehiculo.Modelo}`;
+                                        suggestionItem.addEventListener('click', () => {
+                                            window.location.href = `/vehiculos/${vehiculo.id}`;
+                                        });
+                                        suggestionsContainer.appendChild(suggestionItem);
+                                    });
+                                }
+                            })
+                            .catch(error => console.error('Error al buscar vehículos:', error));
+                    } else {
+                        document.getElementById('suggestions').innerHTML = '';
+                    }
+                });
+                //Metodo update
+                function editarVehiculo(id) {
+                    fetch(`/vehiculos/getUpdate/${id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("Datos del vehículo:", data);
+                            document.getElementById('Marca').value = data.Marca;
+                            document.getElementById('Modelo').value = data.Modelo;
+                            document.getElementById('Combustible').value = data.Combustible;
+                            document.getElementById('Año').value = data.Año;
+                            document.getElementById('Precio').value = data.Precio;
+                            document.getElementById('TipoVehiculo').value = data.TipoVehiculo;
+                            document.getElementById('vehiculoId').value = data.id;
+
+                          
+
+                            // Abre el modal de edición
+                            $('#modalEditar').modal('show');
+                        })
+                        .catch(error => console.error('Error al cargar datos del vehículo:', error));
+                }
+
+                // Procesar formulario de edición
+                document.getElementById('formEditarVehiculo').addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    const formData = new FormData(this);
+                    const id = formData.get('vehiculoId');
+
+                    fetch(`/vehiculos/${id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                            // Agrega el token CSRF si es necesario para protección CSRF
+                            // 'X-CSRF-Token': 'valor del token'
+                        },
+                        body: JSON.stringify(Object.fromEntries(formData))
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                alert('Vehículo actualizado correctamente');
+                                $('#modalEditar').modal('hide');
+                                window.location.reload(); // Recargar la página o actualizar la lista de vehículos
+                            } else {
+                                throw new Error('Error al actualizar el vehículo');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error al actualizar el vehículo:', error);
+                            alert('No se pudo actualizar el vehículo');
+                        });
+                });
+
+
+
+
+
+                function searchVehicles() {
+                    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+                    fetch(`/vehiculos/search?query=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            displaySearchResults(data);
+                        })
+                        .catch(error => console.error('Error al buscar vehículos:', error));
+                }
+                function confirmarEliminar(id) {
+                    if (confirm('¿Estás seguro de que deseas eliminar este vehículo?')) {
+                        fetch(`/vehiculos/${id}`, {
+                            method: 'DELETE'
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    alert('Vehículo eliminado correctamente');
+                                    window.location.reload(); // Recargar la página o actualizar la lista de vehículos
+                                } else {
+                                    throw new Error('Error al eliminar el vehículo');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error al eliminar el vehículo:', error);
+                                alert('No se pudo eliminar el vehículo');
+                            });
+                    }
+                }
+
+                function displaySearchResults(results) {
+                    const container = document.getElementById('vehiculosContainer');
+                    container.innerHTML = '';
+                    results.forEach(vehiculo => {
+                        console.log('vehiculo response: ',vehiculo);
+                        const card = document.createElement('div');
+                        card.className = 'col-md-4 mb-4';
+                        card.innerHTML = `
+                    <div class="card">
+                        <img src="/images/${vehiculo.Imagen1}" class="card-img-top" alt="${vehiculo.Marca} ${vehiculo.Modelo}">
+                        <div class="card-body">
+                            <h5 class="card-title">${vehiculo.Marca} ${vehiculo.Modelo}</h5>
+                            <p class="card-text">Combustible: ${vehiculo.Combustible}</p>
+                            <p class="card-text">Año: ${vehiculo.Año}</p>
+                            <p class="card-text">Precio: $${parseFloat(vehiculo.Precio).toLocaleString('es-CL')}</p>
+                        </div>
+                    </div>
+                `;
+                        container.appendChild(card);
+                    });
+                }
+            </script>
+</body>
+
+</html>
+``

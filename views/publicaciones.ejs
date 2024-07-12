@@ -1,0 +1,42 @@
+<!-- views/publicaciones.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrar Publicaciones</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+    <div class="container">
+        <h1>Administrar Publicaciones</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% publicaciones.forEach(publicacion => { %>
+                    <tr>
+                        <td><%= publicacion.id %></td>
+                        <td><%= publicacion.titulo %></td>
+                        <td><%= publicacion.descripcion %></td>
+                        <td>
+                            <form action="/publicaciones/<%= publicacion.id %>?_method=DELETE" method="POST">
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <%- include('partials/footer') %>
+</body>
+</html>
